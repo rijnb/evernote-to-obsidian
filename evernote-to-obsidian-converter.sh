@@ -5,6 +5,7 @@
 # Check input parameters
 # ----------------
 
+echo "Evernote to Obsidian converter."
 if [ $# -ne 2 ]
 then
     echo "Usage: $(basename $0) output-dir input-file.enex"
@@ -94,7 +95,7 @@ do
     sed -i .bak 's/<<\([^>]*\)>>/`<<\1>>`/g' "$FILE"
 
     # Remove whitespace before tables.
-    sed -i .bak 's/^[\t ]*|\(.*\)|[\t ]*$/|\1|/' "$FILE"
+    sed -i .bak 's/^[	 ]*|\(.*\)|[	 ]*$/|\1|/' "$FILE"
 
     rm "$FILE".bak
 done
