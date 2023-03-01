@@ -13,6 +13,6 @@ evernote-to-obsidian-converter.sh <output-dir> <.enex-file>
 This script:
 
 * Executes Yarle with a generated configuration file.
-* Replaces incorrect `<<...>>` links in the Markdown documents.
+* Embeds incorrect `<<...>>` in backticks.
 * Unindents accidentally indented Markdown tables.
 

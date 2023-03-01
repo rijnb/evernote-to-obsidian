@@ -1,6 +1,10 @@
 # This file uses YARLE to convert an Evernote .enex file
 # to an Obsidian readable Markdown file system.
 
+# ----------------
+# Check input parameters
+# ----------------
+
 if [ $# -ne 2 ]
 then
     echo "Usage: $(basename $0) output-dir input-file.enex"
@@ -24,7 +28,7 @@ then
     exit -1
 fi
 
-INPUT_FILENAME=$(basename -- "$INPUT")
+INPUT_FILENAME=$(basename "$INPUT")
 INPUT_FILENAME_EXT="${INPUT_FILENAME##*.}"
 if [ "$INPUT_FILENAME_EXT" != "enex" ]
 then
@@ -44,6 +48,10 @@ then
     exit -1
 fi
 
+# ----------------
+# Create input files (config and note template)
+# ----------------
+
 TODAY=$(date +%Y-%m-%d)
 TEMPLATE_PATCHED="$TEMPLATE.patched"
 cat "$TEMPLATE" |
@@ -52,6 +60,10 @@ cat "$CONFIG.template" |
     sed -e "s:@INPUT:\"$INPUT\":g" |
     sed -e "s:@OUTPUT:\"$OUTPUT\":g" |
     sed -e "s:@TEMPLATE:\"$TEMPLATE_PATCHED\":g" > "$CONFIG"
+
+# ----------------
+# Run Yarle
+# ----------------
 
 echo "Output directory     : $OUTPUT"
 echo "Input file (Evernote): $INPUT_FILENAME ("$(dirname "$INPUT")")"
@@ -62,3 +74,28 @@ then
     error "         $INPUT to directory $OUTPUT"
     exit 1
 fi
+
+# ----------------
+# Run post-conversion scripts
+# ----------------
+
+MD_DIR="$OUTPUT/notes/"$(basename "$INPUT" .enex)
+echo "Run post-conversion scripts in $MD_DIR..."
+if [ ! -d ]
+then
+    echo "ERROR: Missing output directory $MD_DIR"
+    exit 1
+fi
+cd "$MD_DIR"
+
+for FILE in *.md
+do 
+    # Embed <<...>> links in backticks.
+    sed -i .bak 's/<<\([^>]*\)>>/`<<\1>>`/g' "$FILE"
+
+    # Remove whitespace before tables.
+    sed -i .bak 's/^[\t ]*|\(.*\)|[\t ]*$/|\1|/' "$FILE"
+
+    rm "$FILE".bak
+done
+echo "Done"
