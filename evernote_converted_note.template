@@ -1,0 +1,11 @@
+{content-block}{content}{end-content-block}
+{tags-block}
+{tags}
+{end-tags-block}
+>[!info]- Imported from Evernote
+{notebook-block}>Notebook: {notebook}{end-notebook-block}
+>Imported: @IMPORT
+{created-at-block}>Created: {created-at}{end-created-at-block}
+{updated-at-block}>Updated: {updated-at}{end-updated-at-block}
+{source-url-block}>Source: []({source-url}){end-source-url-block}
+{location-block}>Location: {location}{end-location-block}
