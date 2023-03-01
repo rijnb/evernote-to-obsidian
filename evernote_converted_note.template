@@ -1,7 +1,8 @@
-{content-block}{content}{end-content-block}
-{tags-block}
-{tags}
-{end-tags-block}
+{tags-block}---
+tags: {tags}
+---
+{end-tags-block}{content-block}{content}{end-content-block}
+
 >[!info]- Imported from Evernote
 {notebook-block}>Notebook: {notebook}{end-notebook-block}
 >Imported: @IMPORT
