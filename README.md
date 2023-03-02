@@ -54,9 +54,14 @@ There are 3 template parameters that will be replaced by the Zsh script:
 - `@TEMPLATE`: this will be replaced by the note conversion template file `evernote_converted_note.template`, and
 - `@OUTPUT`: this will be replaced by the output directory.
 
+You can modify this JSON file to your liking. In its current form, tags will be hashless
+as the note will contain all tags in the metadata section, without tags.
+
 The converted notes will use the template `evernote_converted_note.template`, which contains 1 template parameter:
 
 - `@IMPORT`: this will be replaced by the name of the imported notebook.
+
+You can modify the note conversion template. In its current form, tags are placed on top, in the metadata section and the note will have an "Imported from Evernote" callout, with some conversion data.
 
 ## Recommended Obisidian plugins after conversion
 
