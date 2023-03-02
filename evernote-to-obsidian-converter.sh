@@ -1,4 +1,4 @@
-#!/usr/bin/env/zsh
+#!/usr/bin/env zsh
 #
 # This file uses YARLE to convert an Evernote .enex file
 # to an Obsidian readable Markdown file system.
