@@ -8,13 +8,30 @@
 # ----------------
 
 echo "Evernote to Obsidian converter."
-if [ $# -ne 2 ]
+if [ $# -lt 2 -o $# -gt 3 ]
 then
-    echo "Usage: $(basename $0) output-dir input-file.enex"
+    echo "Usage: $(basename $0) output-dir input-file.enex [tags-hierarchy-file]"
+    echo ""
+    echo "  The tags hierarchy file is optional. If provided, it should contain per"
+    echo "  line a category/tag pair. Any tag found in the markdown metadata not"
+    echo "  prefixed by the corresponding category, will be prefixed it."
+    echo "  Note that the metadata must be located in the first 50 lines of the file."
+    echo ""
+    echo "  Example:"
+    echo "       mytags.txt   == companies/apple"
+    echo "       mynote.md    == ---\\ntags: apple ..."
+    echo "     This replace the tags line in mynote.md to:"
+    echo "       mynote.md    == ---\\ntags: companies/apple ..."
     exit -1
 fi
 OUTPUT="$1"
 INPUT="$2"
+TAGS_HIERARCHY=
+if [ $# -eq 3 ]
+then
+    TAGS_HIERARCHY=$(realpath "$3")
+fi
+
 CONFIG=$(dirname "$0")/evernote_config.json
 TEMPLATE=$(dirname "$0")/evernote_converted_note.template
 
@@ -82,6 +99,19 @@ fi
 # Run post-conversion scripts
 # ----------------
 
+if [ "$TAGS_HIERARCHY" != "" ]
+then
+    # Create an associative array to store category/tag pairs from TAGS_HIERARCHY.
+    declare -A CATEGORIES
+
+    # Loop through each line of TAGS_HIERARCHY and split by /.
+    while read line; do 
+      category=${line%/*} # get the part before /
+      tag=${line#*/} # get the part after /
+      CATEGORIES[$tag]=$category # store the pair in the array 
+    done < $TAGS_HIERARCHY
+fi
+
 MD_DIR="$OUTPUT/notes/"$(basename "$INPUT" .enex)
 echo "Run post-conversion scripts in $MD_DIR..."
 if [ ! -d ]
@@ -98,6 +128,34 @@ do
 
     # Remove whitespace before tables.
     sed -i .bak 's/^[	 ]*|\(.*\)|[	 ]*$/|\1|/' "$FILE"
+
+    if [ "$TAGS_HIERARCHY" != "" ]
+    then
+
+        # Create an empty string to store the new tags line.
+        NEW_TAGS=""
+
+        # Loop through each WORD of FILE and check if it starts with tags:
+        OLD_TAGS=$(head -n 50 "$FILE" | grep -e "^tags:")
+        while read WORDS; do 
+          for WORD in $(echo "$WORDS"); do
+            if [[ $WORD == "tags:" ]]; then 
+              continue 
+            fi 
+
+            # Check if the WORD is a tag that has a category in the array.
+            if [[ -n ${CATEGORIES[$WORD]} ]]; then 
+              NEW_TAGS="$NEW_TAGS${CATEGORIES[$WORD]}/$WORD "
+            else 
+              NEW_TAGS="$NEW_TAGS$WORD "
+            fi 
+          done
+
+        done <<< $OLD_TAGS # Use here-string to feed WORDS from tags.
+
+        # Replace the old tags line with NEW_TAGS in FILE using sed.
+        sed -i .bak "s@^tags:.*@tags: $NEW_TAGS@" "$FILE"
+    fi
 
     rm "$FILE".bak
 done
