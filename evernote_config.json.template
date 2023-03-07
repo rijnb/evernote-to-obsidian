@@ -33,7 +33,7 @@
         "omitLinkDisplayName": false
     },
     "nestedTags": {
-        "separatorInEN": "_",
+        "separatorInEN": "/",
         "replaceSeparatorWith": "/",
         "replaceSpaceWith": "-"
     },
