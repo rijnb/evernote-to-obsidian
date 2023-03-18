@@ -43,6 +43,15 @@ output directory and the `.enex` file on the commandline.
 `notes` as your vault (or the directory with the name of the notebook, depending
 on whether you want to add more notebooks later, or not).
 
+## Converting multiple files
+
+Converting multiple ENEX files is simply done with commands like `find` and `xargs`. 
+For example:
+
+```
+find . -name "*.enex" -print0 | xargs -0 -n1 -I{} evernote-to-obsidian-converter.sh output {} ~/source/rijnb/evernote-to-obsidian/personal_tags_hierarchy.txt
+```
+
 ## Tweaking the conversion
 
 The conversion configuration can be adapted by changing values in the file
