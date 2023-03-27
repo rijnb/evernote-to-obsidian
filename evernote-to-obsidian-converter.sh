@@ -37,7 +37,7 @@ TEMPLATE=$(dirname "$0")/evernote_converted_note.template
 
 if [ ! -d "$OUTPUT" ]
 then
-    echo "ERROR: The output direcctory $OUTPUT does not exist."
+    echo "ERROR: The output directory $OUTPUT does not exist."
     echo "       Please check if it's correct, or create it first."
     exit -1
 fi
