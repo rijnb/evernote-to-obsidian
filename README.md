@@ -7,7 +7,7 @@ To convert an Evernote database to a Obsidian (Markdown-based) vault:
 3. Execute the conversion script:
 
 ```
-evernote-to-obsidian-converter.sh <output-dir> <.enex-file>
+evernote-to-obsidian-converter.sh <output-dir> <.enex-file(s)> [tags-hierarchy.txt]
 ```
 
 This script:
@@ -36,20 +36,21 @@ variable to easily start the `.sh` script.
 - Create an output directory for the resulting Markdown files and
 attachements.
 
-- Execute `evernote-to-obsidian.sh <output-dir> <enex-file>`, where you specify the
-output directory and the `.enex` file on the commandline.
+- Execute `evernote-to-obsidian.sh <output-dir> <enex-file> [tags-hierarchy.txt]`,
+where you specify the output directory and the `.enex` file on the commandline.
+You can also convert multiple files at once.
 
 - After the conversion ends, start Obsidian and open the directory called
 `notes` as your vault (or the directory with the name of the notebook, depending
 on whether you want to add more notebooks later, or not).
 
-## Converting multiple files
+## Usage
 
-Converting multiple ENEX files is simply done with commands like `find` and `xargs`. 
-For example:
+For the latest usage info, type:
 
 ```
-find . -name "*.enex" -print0 | xargs -0 -n1 -I{} evernote-to-obsidian-converter.sh output {} ~/source/rijnb/evernote-to-obsidian/personal_tags_hierarchy.txt
+evernote-to-obsidian.sh
+
 ```
 
 ## Tweaking the conversion
