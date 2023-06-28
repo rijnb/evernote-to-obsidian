@@ -107,6 +107,7 @@ do
         # Run post-conversion scripts
         # ----------------
 
+        # Read tags hierarchy, to convert "x/y" tags to a proper hierarchy.
         if [[ -f "$TAGS_HIERARCHY" ]]
         then
             echo "Tags hierarchy: $TAGS_HIERARCHY"
@@ -129,8 +130,9 @@ do
             echo "ERROR: Missing output directory $MD_DIR"
             exit 1
         fi
-
         pushd "$MD_DIR"
+
+        # Process all Markdown files.
         for FILE in *.md
         do 
             # Embed <<...>> links in backticks.
