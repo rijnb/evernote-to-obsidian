@@ -35,6 +35,7 @@ then
     echo "ERROR: The configuration file $CONFIG cannot be found."
     exit -1
 fi
+echo "Configuration: $CONFIG"
 
 TEMPLATE="$(dirname "$0")/evernote_converted_note.template"
 if [[ ! -f "$TEMPLATE" ]]
@@ -42,6 +43,7 @@ then
     echo "ERROR: The note template file $TEMPLATE cannot be found."
     exit -1
 fi
+echo "Template: $TEMPLATE"
 
 OUTPUT="$1"
 if [[ ! -d "$OUTPUT" ]]
@@ -50,6 +52,7 @@ then
     echo "       Please check if it's correct, or create it first."
     exit -1
 fi
+echo "Output: $OUTPUT"
 shift
 
 TAGS_HIERARCHY=
@@ -58,12 +61,32 @@ do
     if [[ "$ARG" == *.txt ]]
     then
         TAGS_HIERARCHY="$(realpath "$ARG")"
+        if [[ -f "$TAGS_HIERARCHY" ]]
+        then
+            echo "Tags hierarchy: $TAGS_HIERARCHY"
+
+            # Read tags hierarchy, to convert "x/y" tags to a proper hierarchy.
+            # Create an associative array to store category/tag pairs from TAGS_HIERARCHY.
+            declare -A CATEGORIES
+
+            # Loop through each line of TAGS_HIERARCHY and split by /.
+            while read LINE
+            do 
+              CAT=${LINE%/*} 
+              TAG=${LINE#*/} 
+              CATEGORIES[$TAG]=$CAT
+            done < "$TAGS_HIERARCHY"
+        else
+            echo "ERROR: $TAGS_HIERARCHY not found..."
+            exit -1
+        fi
     elif [[ "$ARG" != *.enex ]]
     then
         echo "ERROR: $ARG is not an .enex file..."
         exit -1
     fi
 done
+
 
 for INPUT in "$@"
 do
@@ -74,6 +97,7 @@ do
             echo "ERROR: The input file $INPUT cannot be found."
             exit -1
         fi
+        echo "Input path: $INPUT"
         INPUT_BASENAME="$(basename "$INPUT")"
 
         # ----------------
@@ -94,7 +118,6 @@ do
         # ----------------
 
         echo "Input file (Evernote): $INPUT_BASENAME ("$(dirname "$INPUT")")"
-        echo "Output directory     : $OUTPUT"
         npx -p yarle-evernote-to-md@latest yarle --configFile "$CONFIG"
         if [[ $? -ne 0 ]]
         then
@@ -107,22 +130,6 @@ do
         # Run post-conversion scripts
         # ----------------
 
-        # Read tags hierarchy, to convert "x/y" tags to a proper hierarchy.
-        if [[ -f "$TAGS_HIERARCHY" ]]
-        then
-            echo "Tags hierarchy: $TAGS_HIERARCHY"
-            # Create an associative array to store category/tag pairs from TAGS_HIERARCHY.
-            declare -A CATEGORIES
-
-            # Loop through each line of TAGS_HIERARCHY and split by /.
-            while read LINE
-            do 
-              CAT=${LINE%/*} 
-              TAG=${LINE#*/} 
-              CATEGORIES[$TAG]=$CAT
-            done < "$TAGS_HIERARCHY"
-        fi
-
         MD_DIR="$OUTPUT/notes/"$(basename "$INPUT" .enex)
         echo "Run post-conversion scripts in $MD_DIR..."
         if [[ ! -d "$MD_DIR" ]]
@@ -134,7 +141,8 @@ do
 
         # Process all Markdown files.
         for FILE in *.md
-        do 
+        do
+            echo "Post-process: $FILE" 
             # Embed <<...>> links in backticks.
             sed -i .bak 's/<<\([^>]*\)>>/`<<\1>>`/g' "$FILE"
 
@@ -143,12 +151,11 @@ do
 
             if [[ -f "$TAGS_HIERARCHY" ]]
             then
-
                 # Create an empty string to store the new tags line.
                 NEW_TAGS=""
 
                 # Loop through each WORD of FILE and check if it starts with tags:
-                OLD_TAGS=$(head -n 50 "$FILE" | grep -e "^tags:")
+                OLD_TAGS="$(head -n 50 "$FILE" | grep -e "^tags:")"
                 while read WORDS; do 
                   for WORD in $(echo "$WORDS"); do
                     if [[ $WORD == "tags:" ]]; then 
@@ -163,7 +170,7 @@ do
                     fi 
                   done
 
-                done <<< $OLD_TAGS # Use here-string to feed WORDS from tags.
+                done <<< "$OLD_TAGS" # Use here-string to feed WORDS from tags.
 
                 # Replace the old tags line with NEW_TAGS in FILE using sed.
                 sed -i .bak "s@^tags:.*@tags: $NEW_TAGS@" "$FILE"
