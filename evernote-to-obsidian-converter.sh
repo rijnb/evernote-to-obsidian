@@ -29,14 +29,14 @@ then
     exit -1
 fi
 
-CONFIG=$(dirname "$0")/evernote_config.json
+CONFIG="$(dirname "$0")/evernote_config.json"
 if [[ ! -f "$CONFIG" ]]
 then
     echo "ERROR: The configuration file $CONFIG cannot be found."
     exit -1
 fi
 
-TEMPLATE=$(dirname "$0")/evernote_converted_note.template
+TEMPLATE="$(dirname "$0")/evernote_converted_note.template"
 if [[ ! -f "$TEMPLATE" ]]
 then
     echo "ERROR: The note template file $TEMPLATE cannot be found."
@@ -55,10 +55,10 @@ shift
 TAGS_HIERARCHY=
 for ARG in "$@"
 do
-    if [[ $ARG == *.txt ]]
+    if [[ "$ARG" == *.txt ]]
     then
-        TAGS_HIERARCHY=$(realpath "$ARG")
-    elif [[ $ARG != *.enex ]]
+        TAGS_HIERARCHY="$(realpath "$ARG")"
+    elif [[ "$ARG" != *.enex ]]
     then
         echo "ERROR: $ARG is not an .enex file..."
         exit -1
@@ -67,14 +67,14 @@ done
 
 for INPUT in "$@"
 do
-    if [[ $INPUT == *.enex ]]
+    if [[ "$INPUT" == *.enex ]]
     then
         if [[ ! -f "$INPUT" ]]
         then
             echo "ERROR: The input file $INPUT cannot be found."
             exit -1
         fi
-        INPUT_BASENAME=$(basename "$INPUT")
+        INPUT_BASENAME="$(basename "$INPUT")"
 
         # ----------------
         # Create input files (config and note template)
@@ -120,7 +120,7 @@ do
               CAT=${LINE%/*} 
               TAG=${LINE#*/} 
               CATEGORIES[$TAG]=$CAT
-            done < $TAGS_HIERARCHY
+            done < "$TAGS_HIERARCHY"
         fi
 
         MD_DIR="$OUTPUT/notes/"$(basename "$INPUT" .enex)
