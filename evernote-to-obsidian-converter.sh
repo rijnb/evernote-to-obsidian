@@ -10,15 +10,21 @@
 echo "Evernote to Obsidian converter."
 if [[ $# -lt 2 ]]
 then
-    echo "Usage: $(basename $0) output-dir file1.enex file2.enex ... [tags-hierarchy-file.txt]"
+    echo "Usage: $(basename $0) output-dir [tags-hierarchy-file.txt] file1.enex file2.enex ..."
     echo ""
-    echo "  The tags hierarchy file is optional. If provided, it should contain per"
-    echo "  line a category/tag pair and it must have the .txt extension."
-    echo "  Any tag found in the markdown metadata not prefixed by the corresponding"
-    echo "  category, will be prefixed it."
+    echo "  The output directory can be a full or relative path and should point at an empty"
+    echo "  directory. The directory is not created by the script if it does not exist."
+    echo ""
+    echo "  The tags hierarchy file is optional. If provided, it must have the extension .txt and"
+    echo "  contain one category/tag pair per line."
+    echo ""
+    echo "  Tags found in the markdown metadata of Evernote records will be prefixed by the"
+    echo "  corresponding category in the tags file (or left as-is if there is not category)."
+    echo ""
+    echo "  The .enex files can be in the current directory, or may include a path."
     echo ""
     echo "  Example of usage:"
-    echo "    $(basename $0) output *.enex ~/obsidian/mytags.txt"
+    echo "    $(basename $0) output ~/obsidian/mytags.txt *.enex"
     echo ""
     echo "  Example of tags file:"
     echo "       mytags.txt   == companies/apple"
@@ -30,7 +36,7 @@ then
 fi
 
 # Check if NPX was installed.
-which npx
+which npx >/dev/null
 if [[ $? -ne 0 ]]
 then
     echo "This script requires 'npx' to be installed'."
@@ -42,7 +48,6 @@ then
     echo "  npm install -g npx      (to install NPX, not in home directory)"
     exit -1
 fi
-
 
 CONFIG="$(dirname "$0")/evernote_config.json"
 if [[ ! -f "$CONFIG" ]]
@@ -133,6 +138,7 @@ do
         # ----------------
 
         echo "Input file (Evernote): $INPUT_BASENAME ("$(dirname "$INPUT")")"
+        echo "Running Yarle..."
         npx -p yarle-evernote-to-md@latest yarle --configFile "$CONFIG"
         if [[ $? -ne 0 ]]
         then
@@ -146,7 +152,7 @@ do
         # ----------------
 
         MD_DIR="$OUTPUT/notes/"$(basename "$INPUT" .enex)
-        echo "Run post-conversion scripts in $MD_DIR..."
+        echo "Run post-processing scripts in $MD_DIR..."
         if [[ ! -d "$MD_DIR" ]]
         then
             echo "ERROR: Missing output directory $MD_DIR"
