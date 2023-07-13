@@ -29,6 +29,21 @@ then
     exit -1
 fi
 
+# Check if NPX was installed.
+which npx
+if [[ $? -ne 0 ]]
+then
+    echo "This script requires 'npx' to be installed'."
+    echo ""
+    echo "On a Mac, you might want to install 'brew' first, see https://brew.sh."
+    echo "Then:"
+    echo "  brew install node       (to install Node.js)"
+    echo "  brew install npm        (to install NPM, the package manager)"
+    echo "  npm install -g npx      (to install NPX, not in home directory)"
+    exit -1
+fi
+
+
 CONFIG="$(dirname "$0")/evernote_config.json"
 if [[ ! -f "$CONFIG" ]]
 then
