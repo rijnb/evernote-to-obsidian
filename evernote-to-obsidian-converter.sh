@@ -50,29 +50,29 @@ then
 fi
 
 CONFIG="$(dirname "$0")/evernote_config.json"
+echo "Configuration: $CONFIG"
 if [[ ! -f "$CONFIG" ]]
 then
     echo "ERROR: The configuration file $CONFIG cannot be found."
     exit -1
 fi
-echo "Configuration: $CONFIG"
 
 TEMPLATE="$(dirname "$0")/evernote_converted_note.template"
+echo "Template: $TEMPLATE"
 if [[ ! -f "$TEMPLATE" ]]
 then
     echo "ERROR: The note template file $TEMPLATE cannot be found."
     exit -1
 fi
-echo "Template: $TEMPLATE"
 
 OUTPUT="$1"
+echo "Output: $OUTPUT"
 if [[ ! -d "$OUTPUT" ]]
 then
     echo "ERROR: The output directory $OUTPUT does not exist."
     echo "       Please check if it's correct, or create it first."
     exit -1
 fi
-echo "Output: $OUTPUT"
 shift
 
 TAGS_HIERARCHY=
