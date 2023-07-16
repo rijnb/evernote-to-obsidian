@@ -79,3 +79,4 @@ To check the correctness of your Obsidian vault, you may want to use the
 Obisidian plugins 
 - Find unlinked file: [https://github.com/Vinzent03/find-unlinked-files] to identify orphaned files (make sure you exclude `md` files), and
 - Vault statistics: [https://github.com/bkyle/obsidian-vault-statistics-plugin] to show you a note count (should match Evernotes note count).
+
