@@ -50,10 +50,10 @@ then
 fi
 
 CONFIG="$(dirname "$0")/evernote_config.json"
-echo "Configuration: $CONFIG"
-if [[ ! -f "$CONFIG" ]]
+echo "Configuration template: $CONFIG.template"
+if [[ ! -f "$CONFIG.template" ]]
 then
-    echo "ERROR: The configuration file $CONFIG cannot be found."
+    echo "ERROR: The configuration file template $CONFIG.template cannot be found."
     exit -1
 fi
 
@@ -91,9 +91,9 @@ do
 
             # Loop through each line of TAGS_HIERARCHY and split by /.
             while read LINE
-            do 
-              CAT=${LINE%/*} 
-              TAG=${LINE#*/} 
+            do
+              CAT=${LINE%/*}
+              TAG=${LINE#*/}
               CATEGORIES[$TAG]=$CAT
             done < "$TAGS_HIERARCHY"
         else
@@ -142,8 +142,8 @@ do
         npx -p yarle-evernote-to-md@latest yarle --configFile "$CONFIG"
         if [[ $? -ne 0 ]]
         then
-            error "WARNING: an error may have occurred while converting"
-            error "         $INPUT to directory $OUTPUT"
+            echo "WARNING: an error may have occurred while converting"
+            echo "         $INPUT to directory $OUTPUT"
             exit 1
         fi
 
@@ -163,7 +163,7 @@ do
         # Process all Markdown files.
         for FILE in *.md
         do
-            echo "Post-process: $FILE" 
+            echo "Post-process: $FILE"
             # Embed <<...>> links in backticks.
             sed -i .bak 's/<<\([^>]*\)>>/`<<\1>>`/g' "$FILE"
 
@@ -177,18 +177,18 @@ do
 
                 # Loop through each WORD of FILE and check if it starts with tags:
                 OLD_TAGS="$(head -n 50 "$FILE" | grep -e "^tags:")"
-                while read WORDS; do 
+                while read WORDS; do
                   for WORD in $(echo "$WORDS"); do
-                    if [[ $WORD == "tags:" ]]; then 
-                      continue 
-                    fi 
+                    if [[ $WORD == "tags:" ]]; then
+                      continue
+                    fi
 
                     # Check if the WORD is a tag that has a category in the array.
-                    if [[ -n ${CATEGORIES[$WORD]} ]]; then 
+                    if [[ -n ${CATEGORIES[$WORD]} ]]; then
                       NEW_TAGS="$NEW_TAGS${CATEGORIES[$WORD]}/$WORD "
-                    else 
+                    else
                       NEW_TAGS="$NEW_TAGS$WORD "
-                    fi 
+                    fi
                   done
 
                 done <<< "$OLD_TAGS" # Use here-string to feed WORDS from tags.
