@@ -32,12 +32,11 @@ then
     echo ""
     echo "     This would replace the tags line in mynote.md to:"
     echo "       mynote.md    == ---\\ntags: companies/apple ..."
-    exit -1
+    exit 1
 fi
 
-# Check if NPX was installed.
-which npx >/dev/null
-if [[ $? -ne 0 ]]
+# Check if NPX is installed.
+if ! command -v npx >/dev/null 2>&1
 then
     echo "This script requires 'npx' to be installed'."
     echo ""
@@ -46,23 +45,24 @@ then
     echo "  brew install node       (to install Node.js)"
     echo "  brew install npm        (to install NPM, the package manager)"
     echo "  npm install -g npx      (to install NPX, not in home directory)"
-    exit -1
+    exit 1
 fi
 
-CONFIG="$(dirname "$0")/evernote_config.json"
-echo "Configuration template: $CONFIG.template"
-if [[ ! -f "$CONFIG.template" ]]
+SCRIPT_DIR="$(dirname "$0")"
+CONFIG_TEMPLATE="$SCRIPT_DIR/evernote_config.json.template"
+echo "Configuration template: $CONFIG_TEMPLATE"
+if [[ ! -f "$CONFIG_TEMPLATE" ]]
 then
-    echo "ERROR: The configuration file template $CONFIG.template cannot be found."
-    exit -1
+    echo "ERROR: The configuration file template $CONFIG_TEMPLATE cannot be found."
+    exit 1
 fi
 
-TEMPLATE="$(dirname "$0")/evernote_converted_note.template"
+TEMPLATE="$SCRIPT_DIR/evernote_converted_note.template"
 echo "Template: $TEMPLATE"
 if [[ ! -f "$TEMPLATE" ]]
 then
     echo "ERROR: The note template file $TEMPLATE cannot be found."
-    exit -1
+    exit 1
 fi
 
 OUTPUT="$1"
@@ -71,9 +71,14 @@ if [[ ! -d "$OUTPUT" ]]
 then
     echo "ERROR: The output directory $OUTPUT does not exist."
     echo "       Please check if it's correct, or create it first."
-    exit -1
+    exit 1
 fi
 shift
+
+# Use temp files so concurrent runs don't clobber each other's config.
+CONFIG="$(mktemp /tmp/evernote_config.XXXXXX.json)"
+TEMPLATE_PATCHED="$(mktemp /tmp/evernote_converted_note.XXXXXX.template)"
+trap 'rm -f "$CONFIG" "$TEMPLATE_PATCHED"' EXIT
 
 TAGS_HIERARCHY=
 for ARG in "$@"
@@ -98,12 +103,12 @@ do
             done < "$TAGS_HIERARCHY"
         else
             echo "ERROR: $TAGS_HIERARCHY not found..."
-            exit -1
+            exit 1
         fi
     elif [[ "$ARG" != *.enex ]]
     then
         echo "ERROR: $ARG is not an .enex file..."
-        exit -1
+        exit 1
     fi
 done
 
@@ -115,7 +120,7 @@ do
         if [[ ! -f "$INPUT" ]]
         then
             echo "ERROR: The input file $INPUT cannot be found."
-            exit -1
+            exit 1
         fi
         echo "Input path: $INPUT"
         INPUT_BASENAME="$(basename "$INPUT")"
@@ -125,22 +130,22 @@ do
         # ----------------
 
         TODAY=$(date +%Y-%m-%d)
-        TEMPLATE_PATCHED="$TEMPLATE.patched"
-        cat "$TEMPLATE" |
-            sed -e "s:@IMPORT:$TODAY:g" > "$TEMPLATE_PATCHED"
-        cat "$CONFIG.template" |
-            sed -e "s:@INPUT:\"$INPUT\":g" |
-            sed -e "s:@OUTPUT:\"$OUTPUT\":g" |
-            sed -e "s:@TEMPLATE:\"$TEMPLATE_PATCHED\":g" > "$CONFIG"
+        # Patch the note template with today's date.
+        sed -e "s|@IMPORT|$TODAY|g" "$TEMPLATE" > "$TEMPLATE_PATCHED"
+        # Patch the config template. Use | as separator to avoid conflicts with : in paths.
+        sed -e "s|@INPUT|\"$INPUT\"|g" \
+            -e "s|@OUTPUT|\"$OUTPUT\"|g" \
+            -e "s|@TEMPLATE|\"$TEMPLATE_PATCHED\"|g" \
+            "$CONFIG_TEMPLATE" > "$CONFIG"
 
         # ----------------
         # Run Yarle
         # ----------------
 
-        echo "Input file (Evernote): $INPUT_BASENAME ("$(dirname "$INPUT")")"
+        echo "Input file (Evernote): $INPUT_BASENAME ($(dirname "$INPUT"))"
         echo "Running Yarle..."
-        npx -p yarle-evernote-to-md@latest yarle --configFile "$CONFIG"
-        if [[ $? -ne 0 ]]
+        # @latest intentionally used to always pick up Yarle bug fixes and format improvements.
+        if ! npx -p yarle-evernote-to-md@latest yarle --configFile "$CONFIG"
         then
             echo "WARNING: an error may have occurred while converting"
             echo "         $INPUT to directory $OUTPUT"
@@ -160,7 +165,8 @@ do
         fi
         pushd "$MD_DIR"
 
-        # Process all Markdown files.
+        # nullglob prevents the literal "*.md" string when no Markdown files exist.
+        setopt nullglob
         for FILE in *.md
         do
             echo "Post-process: $FILE"
@@ -175,10 +181,11 @@ do
                 # Create an empty string to store the new tags line.
                 NEW_TAGS=""
 
-                # Loop through each WORD of FILE and check if it starts with tags:
+                # Frontmatter tags are expected within the first 50 lines.
                 OLD_TAGS="$(head -n 50 "$FILE" | grep -e "^tags:")"
                 while read WORDS; do
-                  for WORD in $(echo "$WORDS"); do
+                  # Use ${=WORDS} for explicit word-splitting in Zsh.
+                  for WORD in ${=WORDS}; do
                     if [[ $WORD == "tags:" ]]; then
                       continue
                     fi
@@ -191,13 +198,15 @@ do
                     fi
                   done
 
-                done <<< "$OLD_TAGS" # Use here-string to feed WORDS from tags.
+                done <<< "$OLD_TAGS"
 
-                # Replace the old tags line with NEW_TAGS in FILE using sed.
-                sed -i .bak "s@^tags:.*@tags: $NEW_TAGS@" "$FILE"
+                # Replace the old tags line. Pass NEW_TAGS via env so special characters
+                # (& \ @) in tag values are treated as literal data by perl.
+                NEW_TAGS="${NEW_TAGS% }"
+                NEW_TAGS="$NEW_TAGS" perl -pi -e 's/^tags:.*$/tags: $ENV{NEW_TAGS}/' "$FILE"
             fi
 
-            rm "$FILE".bak
+            rm -f "$FILE".bak
         done
         popd
     fi

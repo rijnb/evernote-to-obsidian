@@ -7,7 +7,7 @@ To convert an Evernote database to a Obsidian (Markdown-based) vault:
 3. Execute the conversion script:
 
 ```
-evernote-to-obsidian-converter.sh <output-dir> <.enex-file(s)> [tags-hierarchy.txt]
+evernote-to-obsidian-converter.sh <output-dir> [tags-hierarchy.txt] <.enex-file(s)>
 ```
 
 This script:
@@ -36,7 +36,7 @@ variable to easily start the `.sh` script.
 - Create an output directory for the resulting Markdown files and
 attachements.
 
-- Execute `evernote-to-obsidian.sh <output-dir> <enex-file> [tags-hierarchy.txt]`,
+- Execute `evernote-to-obsidian-converter.sh <output-dir> [tags-hierarchy.txt] <enex-file(s)>`,
 where you specify the output directory and the `.enex` file on the commandline.
 You can also convert multiple files at once.
 
@@ -56,7 +56,7 @@ evernote-to-obsidian.sh
 ## Tweaking the conversion
 
 The conversion configuration can be adapted by changing values in the file
-`evernote-config.json.template`. The parameters are all explained in (the Yarle config section)[https://github.com/akosbalasko/yarle].
+`evernote-config.json.template`. The parameters are all explained in [the Yarle config section](https://github.com/akosbalasko/yarle).
 
 There are 3 template parameters that will be replaced by the Zsh script:
 
